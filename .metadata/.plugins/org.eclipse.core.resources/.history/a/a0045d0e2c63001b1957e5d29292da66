@@ -1,0 +1,127 @@
+/**
+ * BrokerageServiceTestCase.java
+ *
+ * This file was auto-generated from WSDL
+ * by the Apache Axis 1.2RC2 Nov 16, 2004 (12:19:44 EST) WSDL2Java emitter.
+ */
+
+package com.manning.samples.soasecimpl.example6;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.rpc.handler.HandlerInfo;
+import javax.xml.rpc.handler.HandlerRegistry;
+
+import com.manning.samples.soasecimpl.commons.Constants;
+import com.manning.samples.soasecimpl.example3.ClientSideWSSecurityHandler;
+
+public class BrokerageServiceTestCase extends junit.framework.TestCase {
+    public BrokerageServiceTestCase(java.lang.String name) {
+        super(name);
+    }
+    
+    public void testBodySigning() throws Exception {
+        BrokerageServiceLocator serviceLocator = 
+            new BrokerageServiceLocator();
+        Example6SoapBindingStub binding;
+        try {
+            binding = (Example6SoapBindingStub)
+                serviceLocator.getexample6();
+        }
+        catch (javax.xml.rpc.ServiceException jre) {
+            if(jre.getLinkedCause()!=null)
+                jre.getLinkedCause().printStackTrace();
+            throw new junit.framework.AssertionFailedError
+                ("JAX-RPC ServiceException caught: " + jre);
+        }
+        assertNotNull("binding is null", binding);
+
+        // Time out after a minute
+        binding.setTimeout(60000);
+
+        // Test operation
+        String toAddress =
+            "http://" +
+            System.getProperty("axis.host","localhost") + ":" +
+            System.getProperty("proxy.port", "8080") +
+            "/axis/services/example6";
+        binding._setProperty
+            (Constants.TO_ADDRESS_MSG_CONTEXT_PROPERTY, 
+             toAddress);
+        binding._setProperty
+            (Constants.USERNAME_MSG_CONTEXT_PROPERTY, "chap");
+        binding._setProperty
+            (Constants.PASSWORD_MSG_CONTEXT_PROPERTY, "goodpass");
+        addHandlers
+            (binding._getService(), binding.getPortName());
+        java.lang.String value =
+            binding.createMarketOrder("GOOG", false, 200);
+        // TBD - validate results
+    }
+
+    /** Adds addressing handler and client side security handler 
+     * to the given service's handler chain.
+     */
+    private static void addHandlers
+        (javax.xml.rpc.Service service, 
+         javax.xml.namespace.QName portName) {
+        //add our client side wsse handler
+        HandlerRegistry handlerRegistry = service.getHandlerRegistry();
+        assertNotNull(handlerRegistry);
+        java.util.List handlerChain =
+            handlerRegistry.getHandlerChain(portName);
+        if (handlerChain == null) {
+            handlerChain = new java.util.LinkedList();
+            handlerRegistry.setHandlerChain(portName, handlerChain);
+        }
+        handlerChain.add
+            (new HandlerInfo
+                    (AddressingHandler.class,new HashMap(), null));
+        
+        Map handlerConfig = new HashMap();
+        handlerConfig.put
+            (ClientSideWSSecurityHandler.TARGET_ACTOR_PARAMETER_NAME,
+             Constants.OUR_SECURITY_COP_URI);
+        handlerConfig.put
+            (ClientSideWSSecurityHandler.AUTH_MODE_PARAMETER_NAME,
+             Integer.toString
+             (ClientSideWSSecurityHandler.
+                     CLEAR_TEXT_PASSWORD_AUTH_MODE));
+        handlerChain.add
+        (new HandlerInfo(ClientSideWSSecurityHandler.class,
+                         handlerConfig,
+                         null));
+        /*
+        Map signingConfig = new HashMap();
+        signingConfig.put
+            (SigningHandler.IS_ON_REQUEST_SIDE_PARAM_NAME, "true");
+        signingConfig.put
+            (SigningHandler.KEY_STORE_RES_PATH_PARAMETER_NAME,
+             "/example5.keystore");
+        signingConfig.put
+            (SigningHandler.KEY_STORE_PASSWORD_PARAMETER_NAME,
+             "goodpass");
+        signingConfig.put
+            (SigningHandler.OUR_KEY_ALIAS_PARAMETER_NAME,
+             "http://manning.com/xmlns/samples/soasecimpl/citizen");
+        signingConfig.put
+            (SigningHandler.OUR_KEY_PASSWORD_PARAMETER_NAME,
+             "goodpass");
+        signingConfig.put
+            (SigningHandler.XPATH_TO_SIGN_PARAM_NAME,
+             "soapenv:Body|soapenv:Header/wsa:*");
+             //".");
+        signingConfig.put
+            (SigningHandler.NS_CATALOG_RES_PATH_PARAMETER_NAME,
+             "/namespacecatalog.properties");
+        signingConfig.put
+            (SigningHandler.TARGET_ACTOR_PARAMETER_NAME,
+             Constants.OUR_SECURITY_COP_URI);
+
+        handlerChain.add
+            (new HandlerInfo(SigningHandler.class,
+                             signingConfig, null));
+                             */
+    }
+}

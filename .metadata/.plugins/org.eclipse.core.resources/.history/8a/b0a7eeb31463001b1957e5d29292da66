@@ -1,0 +1,245 @@
+<project name="soasecimpl" default="compile" basedir=".">
+  <description>
+    ANT build file to compile, deploy and test samples
+    provided with the "Implementing SOA Security" book.
+
+    Author: Prasad A. Chodavarapu (chap@aalayance.com)
+    Version: $Revision: 1.18 $ $Date: 2005/08/28 23:40:13 $
+  </description>
+  <property file="build.properties"/>
+
+  <!-- ====== CLASSPATH DEFINITIONS =====  -->
+  <path id="build.classpath">
+    <pathelement path="${classpath.prefix}"/>
+
+    <pathelement location="${build.home}/classes"/>
+    <!--fileset dir="${axis.home}/lib"-->
+    <fileset dir="/Users/aelkhodary/Documents/GitHub/Books/SOA/axis/lib">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset dir="lib">
+      <include name="**/*.jar"/>
+    </fileset>
+
+    <pathelement path="${classpath.suffix}"/>
+  </path>
+  <!-- set the property for the above classpath so that it
+         can be referenced elsewhere if needed -->
+  <property name="build.classpath" refid="build.classpath"/>
+
+  <!-- ====== TASK DEFINITIONS ====== -->
+
+  <taskdef resource="axis-tasks.properties"
+    classpathref="build.classpath" />
+
+  <!-- ====== TARGET DEFINITIONS ====== -->
+  <target name="clean" description="clean up">
+    <delete dir="${build.home}"/>
+    <delete dir="${test.home}/output"/>
+  </target>
+
+  <target name="init">
+    <!-- Create the build directory structure -->
+    <mkdir dir="${build.home}/classes"/>
+    <mkdir dir="${build.home}/generated"/>
+    <mkdir dir="${test.home}/output"/>
+  </target>
+
+  <target name="compile" depends="init" unless="compile.skip"
+    description="compile java sources" >
+    <javac srcdir="."
+		   destdir="${build.home}/classes"
+		   debug="true"
+		   source="1.4"
+		   >
+            <classpath refid="build.classpath"/>
+            <include name="java/**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="dist" depends="compile" unless="dist.skip"
+    description="creates jar file for distribution">
+    <jar destfile="${build.home}/soasecimpl.jar">
+      <fileset dir="${build.home}/classes"/>
+    </jar>
+  </target>
+
+  <target name="deploy" depends="dist"
+    description="Copies soasecimpl.jar to axis.webinflib and
+    uses Axis AdminService to deploy the wsdd">
+
+    <copy file="${build.home}/soasecimpl.jar"
+        todir="${axis.webinflib}"/>
+    <copy todir="${axis.webinflib}">
+    	<fileset dir="lib">
+    		<include name="**/*.jar"/>
+   		</fileset>
+    </copy>
+  	<copy file="conf/example4.keystore"
+  		todir="${axis.webinflib}/../classes"/>
+  	<copy file="conf/namespacecatalog.properties"
+  	  		todir="${axis.webinflib}/../classes"/>
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/deploy-example1.wsdd"/>
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/deploy-example2.wsdd"/>
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/deploy-example3.wsdd"/>
+  	<axis-admin
+  	      port="${axis.port}"
+  	      hostname="${axis.host}"
+  	      failonerror="true"
+  	      servletpath="axis/services/AdminService"
+  	      debug="true"
+  	      xmlfile="conf/deploy-example4.wsdd"/>
+  	<axis-admin
+  	      port="${axis.port}"
+  	      hostname="${axis.host}"
+  	      failonerror="true"
+  	      servletpath="axis/services/AdminService"
+  	      debug="true"
+  	      xmlfile="conf/deploy-example5.wsdd"/>
+  	<axis-admin
+  	      port="${axis.port}"
+  	      hostname="${axis.host}"
+  	      failonerror="true"
+  	      servletpath="axis/services/AdminService"
+  	      debug="true"
+  	      xmlfile="conf/deploy-example6.wsdd"/>
+  </target>
+
+  <target name="undeploy"
+    description="Uses Axis AdminService to undeploy the wsdd">
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/undeploy-example1.wsdd"/>
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/undeploy-example2.wsdd"/>
+    <axis-admin
+      port="${axis.port}"
+      hostname="${axis.host}"
+      failonerror="true"
+      servletpath="axis/services/AdminService"
+      debug="true"
+      xmlfile="conf/undeploy-example3.wsdd"/>
+    <axis-admin
+       port="${axis.port}"
+       hostname="${axis.host}"
+       failonerror="true"
+       servletpath="axis/services/AdminService"
+       debug="true"
+       xmlfile="conf/undeploy-example4.wsdd"/>
+    <axis-admin
+       port="${axis.port}"
+       hostname="${axis.host}"
+       failonerror="true"
+       servletpath="axis/services/AdminService"
+       debug="true"
+       xmlfile="conf/undeploy-example5.wsdd"/>
+    <axis-admin
+       port="${axis.port}"
+       hostname="${axis.host}"
+       failonerror="true"
+       servletpath="axis/services/AdminService"
+       debug="true"
+       xmlfile="conf/undeploy-example6.wsdd"/>
+  </target>
+
+  <target name="demo" depends="compile"
+    description="Runs an example set given its id">
+      <!-- check for proper usage -->
+      <fail unless="example.id">
+        Error:
+        You forgot to mention the example id.
+        Usage: ant demo -Dexample.id=N
+      </fail>
+      <junit printsummary="withOutAndErr" fork="yes"
+        haltonfailure="no" showoutput="true">
+        <formatter type="xml"/>
+        <classpath>
+          <path refid="build.classpath"/>
+          <pathelement path="conf"/>
+        </classpath>
+        <sysproperty key="proxy.port" value="${proxy.port}"/>
+        <sysproperty key="axis.ssl.port" value="${axis.ssl.port}"/>
+      	<sysproperty key="javax.net.ssl.trustStore"
+      		value="${ssl.truststore}"/>
+      	<sysproperty key="java.security.krb5.realm"
+      		value="${kerberos.realm}"/>
+      	<sysproperty key="java.security.krb5.kdc"
+      	    value="${kerberos.kdc}"/>
+      	<sysproperty key="java.security.auth.login.config"
+      	    value="${jaas.config}"/>
+      	<sysproperty key="kerberos.testclient.user"
+      	    value="${kerberos.testclient.user}"/>
+      	<sysproperty key="kerberos.testclient.password"
+      	    value="${kerberos.testclient.password}"/>
+      	<sysproperty key="kerberos.testservice.gssname"
+      	    value="${kerberos.testservice.gssname}"/>
+        <batchtest todir="${test.home}/output">
+          <fileset dir="${build.home}/classes"
+            includes="**/example${example.id}/*TestCase.class"/>
+        </batchtest>
+      </junit>
+  </target>
+
+  <target name="tcpmon" description="Run tcpmon">
+    <java classname="org.apache.axis.utils.tcpmon"
+      fork="true" spawn="true"
+      classpathref="build.classpath">
+      <arg value="${proxy.port}"/>
+      <arg value="${axis.host}"/>
+      <arg value="${axis.port}"/>
+    </java>
+  </target>
+
+  <target name="java2wsdl" depends="init">
+    <axis-java2wsdl
+      classname="com.manning.samples.soasecimpl.example1.Brokerage"
+      output="${build.home}/generated/example1.wsdl"
+      location="http://${axis.host}:${axis.port}/axis/services/example1"
+      namespace="http://manning.com/xmlns/samples/soasecimpl"
+      style="RPC">
+      <classpath refid="build.classpath"/>
+    </axis-java2wsdl>
+  </target>
+
+  <target name="wsdl2java" depends="init">
+    <axis-wsdl2java
+      output="${build.home}/generated"
+      serverside="true"
+      skeletondeploy="false"
+      deployscope="Application"
+      testcase="true"
+      typemappingversion="1.1"
+      verbose="true"
+      url="wsdl/example1.wsdl">
+      <mapping namespace="http://manning.com/xmlns/samples/soasecimpl"
+        package="com.manning.samples.soasecimpl.example1" />
+    </axis-wsdl2java>
+  </target>
+</project>
